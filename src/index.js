@@ -37,10 +37,10 @@ function parseItems(response) {
 
 function getItemInfo(item) {
     return new Promise(function(resolve) {
+        const itemPromise = getItemNameByHash(item.itemHash);
         if (item.costs[0]) {
-            const itemInfo = getItemNameByHash(item.itemHash)
-                .then(itemPromise => {
-                    const currencyPromise = getItemNameByHash(item.costs[0].itemHash);
+            const itemInfo = getItemNameByHash(item.costs[0].itemHash)
+                .then(currencyPromise => {
                     return Promise.all([itemPromise, currencyPromise]);
                 })
                 .then(([itemPromise, currencyPromise]) => {
@@ -48,7 +48,7 @@ function getItemInfo(item) {
                 });
             resolve(itemInfo);
         } else {
-            const itemInfo = getItemNameByHash(item.itemHash)
+            const itemInfo = itemPromise
                 .then(itemPromise => {
                     return {name: itemPromise, currency: "-", price: "-"};
                 });
@@ -61,7 +61,7 @@ function loadItems(items) {
     for (let index in items) {
         loadItem(items[index]);
     }
-    reveal()
+    reveal();
 }
 
 function loadItem(item) {
