@@ -8,7 +8,7 @@ window.onload = function() {
 };
 
 function getItems() {
-    let request = new XMLHttpRequest();
+    const request = new XMLHttpRequest();
     request.overrideMimeType("text/json");
     request.open("GET", endpoint + "/Destiny2/Vendors/?components=402");
     request.setRequestHeader(xApiKeyHeader, xApiKeyValue);
@@ -23,30 +23,11 @@ function getItems() {
 }
 
 function parseItems(response) {
-    let xurItems = response.Response.sales.data['2190858386'].saleItems;
-    let promises = [];
+    const xurItems = response.Response.sales.data['2190858386'].saleItems;
+    const promises = [];
     for (let index in xurItems) {
-        const promise = new Promise(function(resolve) {
-            let item = xurItems[index];
-            if (item.costs[0]) {
-                let itemInfo = getItemNameByHash(item.itemHash)
-                    .then(itemPromise => {
-                        const currencyPromise = getItemNameByHash(item.costs[0].itemHash);
-                        return Promise.all([itemPromise, currencyPromise]);
-                    })
-                    .then(([itemPromise, currencyPromise]) => {
-                        return {name: itemPromise, currency: currencyPromise, price: item.costs[0].quantity};
-                    });
-                resolve(itemInfo);
-            } else {
-                let itemInfo = getItemNameByHash(item.itemHash)
-                    .then(itemPromise => {
-                        return {name: itemPromise, currency: "-", price: "-"};
-                    });
-                resolve(itemInfo);
-            }
-        });
-        promises.push(promise);
+        const item = xurItems[index];
+        promises.push(getItemInfo(item));
     }
     Promise
         .all(promises)
@@ -54,17 +35,38 @@ function parseItems(response) {
         .catch(reason => showError(reason));
 }
 
+function getItemInfo(item) {
+    return new Promise(function(resolve) {
+        if (item.costs[0]) {
+            const itemInfo = getItemNameByHash(item.itemHash)
+                .then(itemPromise => {
+                    const currencyPromise = getItemNameByHash(item.costs[0].itemHash);
+                    return Promise.all([itemPromise, currencyPromise]);
+                })
+                .then(([itemPromise, currencyPromise]) => {
+                    return {name: itemPromise, currency: currencyPromise, price: item.costs[0].quantity};
+                });
+            resolve(itemInfo);
+        } else {
+            const itemInfo = getItemNameByHash(item.itemHash)
+                .then(itemPromise => {
+                    return {name: itemPromise, currency: "-", price: "-"};
+                });
+            resolve(itemInfo);
+        }
+    });
+}
+
 function loadItems(items) {
     for (let index in items) {
-        let item = items[index];
-        loadItem(item);
+        loadItem(items[index]);
     }
     reveal()
 }
 
 function loadItem(item) {
-    let table = document.getElementById("item-table");
-    let row = document.createElement("tr");
+    const table = document.getElementById("item-table");
+    const row = document.createElement("tr");
     row.appendChild(asTextContent(item.name));
     row.appendChild(asTextContent(item.price));
     row.appendChild(asTextContent(item.currency));
@@ -72,14 +74,14 @@ function loadItem(item) {
 }
 
 function asTextContent(content) {
-    let td = document.createElement("td");
+    const td = document.createElement("td");
     td.appendChild(document.createTextNode(content));
     return td;
 }
 
 function getItemNameByHash(hash) {
     return new Promise(function(resolve, reject) {
-        let request = new XMLHttpRequest();
+        const request = new XMLHttpRequest();
         request.overrideMimeType("text/json");
         request.open("GET", endpoint + "/Destiny2/Manifest/DestinyInventoryItemDefinition/" + hash + "/");
         request.setRequestHeader(xApiKeyHeader, xApiKeyValue);
@@ -102,7 +104,7 @@ function reveal() {
 
 
 function showError(message) {
-    let statusLabel = document.getElementById("status");
+    const statusLabel = document.getElementById("status");
     statusLabel.classList.add("error");
     statusLabel.innerText = "Oop! Something went wrong. Try reloading the site\n" + message;
     statusLabel.hidden = false;
