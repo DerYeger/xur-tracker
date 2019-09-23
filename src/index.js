@@ -7,9 +7,6 @@ window.onload = function() {
     showItems();
 };
 
-let expectedItems = 0;
-let receivedItems = 0;
-
 let cachedItems = {};
 
 function showItems() {
@@ -29,21 +26,27 @@ function showItems() {
 
 function parseItems(response) {
     let xurItems = response.Response.sales.data['2190858386'].saleItems;
+    let promises = [];
     for (let index in xurItems) {
-        expectedItems++;
-        let item = xurItems[index];
-        if (item.costs[0]) {
-            getItemNameByHash(item.itemHash, function(name) {
-                getItemNameByHash(item.costs[0].itemHash, function(currency) {
-                    loadItem(name, item.costs[0].quantity, currency);
+        const promise = new Promise(function(resolve, reject) {
+            let item = xurItems[index];
+            if (item.costs[0]) {
+                getItemNameByHash(item.itemHash, function(name) {
+                    getItemNameByHash(item.costs[0].itemHash, function(currency) {
+                        loadItem(name, item.costs[0].quantity, currency);
+                        resolve("loaded")
+                    })
                 })
-            })
-        } else {
-            getItemNameByHash(item.itemHash, function(name) {
-                loadItem(name, "-", "-");
-            })
-        }
+            } else {
+                getItemNameByHash(item.itemHash, function(name) {
+                    loadItem(name, "-", "-");
+                    resolve("loaded")
+                })
+            }
+        });
+        promises.push(promise);
     }
+    Promise.all(promises).then(reveal, showError);
 }
 
 function loadItem(item, price, currency) {
@@ -53,8 +56,6 @@ function loadItem(item, price, currency) {
     row.appendChild(asTextContent(price));
     row.appendChild(asTextContent(currency));
     table.appendChild(row);
-    receivedItems++;
-    checkState();
 }
 
 function asTextContent(content) {
@@ -84,12 +85,11 @@ function getItemNameByHash(hash, callback) {
     request.send()
 }
 
-function checkState() {
-    if (receivedItems === expectedItems) {
-        document.getElementById("content").hidden = false;
-        document.getElementById("status").hidden = true;
-    }
+function reveal() {
+    document.getElementById("content").hidden = false;
+    document.getElementById("status").hidden = true;
 }
+
 
 function showError(code, message) {
     let statusLabel = document.getElementById("status");
