@@ -4,35 +4,37 @@ const xApiKeyHeader = "X-API-Key";
 const xApiKeyValue = "52b973d5b38d4557a2f3ac1b099e9f0b";
 
 window.onload = function() {
-    getItems();
+    getXurInventory()
+        .then(inventory => getItems(inventory))
+        .then(items => loadItems(items))
+        .catch(error => showError(error));
 };
 
-function getItems() {
-    const request = new XMLHttpRequest();
-    request.overrideMimeType("text/json");
-    request.open("GET", endpoint + "/Destiny2/Vendors/?components=402");
-    request.setRequestHeader(xApiKeyHeader, xApiKeyValue);
-    request.onloadend = function() {
-        if (request.status === 200) {
-            parseItems(JSON.parse(request.responseText));
-        } else {
-            showError(request.status, request.statusText);
-        }
-    };
-    request.send()
+function getXurInventory() {
+    return new Promise(function(resolve, reject) {
+        const request = new XMLHttpRequest();
+        request.overrideMimeType("text/json");
+        request.open("GET", endpoint + "/Destiny2/Vendors/?components=402");
+        request.setRequestHeader(xApiKeyHeader, xApiKeyValue);
+        request.onloadend = function() {
+            if (request.status === 200) {
+                resolve(JSON.parse(request.responseText).Response.sales.data['2190858386'].saleItems);
+            } else {
+                reject(request.status, request.statusText);
+            }
+        };
+        request.send()
+    });
 }
 
-function parseItems(response) {
-    const xurItems = response.Response.sales.data['2190858386'].saleItems;
+function getItems(inventory) {
+    const xurItems = inventory;
     const promises = [];
     for (let index in xurItems) {
         const item = xurItems[index];
         promises.push(getItemInfo(item));
     }
-    Promise
-        .all(promises)
-        .then(result => loadItems(result))
-        .catch(reason => showError(reason));
+    return Promise.all(promises);
 }
 
 function getItemInfo(item) {
@@ -58,9 +60,10 @@ function getItemInfo(item) {
 }
 
 function loadItems(items) {
-    for (let index in items) {
-        loadItem(items[index]);
-    }
+    items.sort(function(a, b) {
+        return a.price - b.price;
+    });
+    items.forEach(item => loadItem(item));
     reveal();
 }
 
