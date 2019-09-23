@@ -30,18 +30,9 @@ th {
     font-size: 1.2em;
 }
 
+th,
 td {
-    text-align: center;
-}
-
-th:nth-child(1),
-td:nth-child(1) {
     text-align: left;
-}
-
-th:nth-child(3),
-td:nth-child(3) {
-    text-align: right;
 }
 
 .status {

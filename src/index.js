@@ -52,7 +52,7 @@ function getItemInfo(item) {
         } else {
             const itemInfo = itemPromise
                 .then(itemPromise => {
-                    return {name: itemPromise, currency: "-", price: "-"};
+                    return {name: itemPromise, currency: "", price: "-"};
                 });
             resolve(itemInfo);
         }
@@ -71,8 +71,7 @@ function loadItem(item) {
     const table = document.getElementById("item-table");
     const row = document.createElement("tr");
     row.appendChild(asTextContent(item.name));
-    row.appendChild(asTextContent(item.price));
-    row.appendChild(asTextContent(item.currency));
+    row.appendChild(asTextContent(item.price + " " + item.currency));
     table.appendChild(row);
 }
 
