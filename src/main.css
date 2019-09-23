@@ -47,7 +47,7 @@ td {
     width: 2em;
     height: 2em;
     animation: spin 1s ease-in-out infinite;
-    margin: auto auto;
+    margin: 5em auto;
 }
 
 @keyframes spin {
