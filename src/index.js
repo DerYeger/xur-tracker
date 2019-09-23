@@ -99,15 +99,20 @@ function getItemNameByHash(hash) {
 }
 
 function reveal() {
-    document.getElementById("content").hidden = false;
     document.getElementById("status").hidden = true;
+    document.getElementById("loader").hidden = true;
+    document.getElementById("error").hidden = true;
+    document.getElementById("content").hidden = false;
 }
 
 
 function showError(message) {
-    const statusLabel = document.getElementById("status");
-    statusLabel.classList.add("error");
-    statusLabel.innerText = "Oop! Something went wrong. Try reloading the site\n" + message;
-    statusLabel.hidden = false;
+    document.getElementById("status").hidden = false;
+    document.getElementById("loader").hidden = true;
+    document.getElementById("content").hidden = true;
+    const errorLabel = document.getElementById("error");
+    errorLabel.classList.add("error");
+    errorLabel.innerText = "Oops! Something went wrong. Try reloading the site\n" + message;
+    errorLabel.hidden = false;
 }
 
