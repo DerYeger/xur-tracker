@@ -4,12 +4,10 @@ const xApiKeyHeader = "X-API-Key";
 const xApiKeyValue = "52b973d5b38d4557a2f3ac1b099e9f0b";
 
 window.onload = function() {
-    showItems();
+    getItems();
 };
 
-let cachedItems = {};
-
-function showItems() {
+function getItems() {
     let request = new XMLHttpRequest();
     request.overrideMimeType("text/json");
     request.open("GET", endpoint + "/Destiny2/Vendors/?components=402");
@@ -28,33 +26,48 @@ function parseItems(response) {
     let xurItems = response.Response.sales.data['2190858386'].saleItems;
     let promises = [];
     for (let index in xurItems) {
-        const promise = new Promise(function(resolve, reject) {
+        const promise = new Promise(function(resolve) {
             let item = xurItems[index];
             if (item.costs[0]) {
-                getItemNameByHash(item.itemHash, function(name) {
-                    getItemNameByHash(item.costs[0].itemHash, function(currency) {
-                        loadItem(name, item.costs[0].quantity, currency);
-                        resolve("loaded")
+                let itemInfo = getItemNameByHash(item.itemHash)
+                    .then(itemPromise => {
+                        const currencyPromise = getItemNameByHash(item.costs[0].itemHash);
+                        return Promise.all([itemPromise, currencyPromise]);
                     })
-                })
+                    .then(([itemPromise, currencyPromise]) => {
+                        return {name: itemPromise, currency: currencyPromise, price: item.costs[0].quantity};
+                    });
+                resolve(itemInfo);
             } else {
-                getItemNameByHash(item.itemHash, function(name) {
-                    loadItem(name, "-", "-");
-                    resolve("loaded")
-                })
+                let itemInfo = getItemNameByHash(item.itemHash)
+                    .then(itemPromise => {
+                        return {name: itemPromise, currency: "-", price: "-"};
+                    });
+                resolve(itemInfo);
             }
         });
         promises.push(promise);
     }
-    Promise.all(promises).then(reveal, showError);
+    Promise
+        .all(promises)
+        .then(result => loadItems(result))
+        .catch(reason => showError(reason));
 }
 
-function loadItem(item, price, currency) {
+function loadItems(items) {
+    for (let index in items) {
+        let item = items[index];
+        loadItem(item);
+    }
+    reveal()
+}
+
+function loadItem(item) {
     let table = document.getElementById("item-table");
     let row = document.createElement("tr");
-    row.appendChild(asTextContent(item));
-    row.appendChild(asTextContent(price));
-    row.appendChild(asTextContent(currency));
+    row.appendChild(asTextContent(item.name));
+    row.appendChild(asTextContent(item.price));
+    row.appendChild(asTextContent(item.currency));
     table.appendChild(row);
 }
 
@@ -64,25 +77,22 @@ function asTextContent(content) {
     return td;
 }
 
-function getItemNameByHash(hash, callback) {
-    if (hash in cachedItems) {
-        callback((cachedItems[hash].Response.displayProperties.name));
-        return;
-    }
-    let request = new XMLHttpRequest();
-    request.overrideMimeType("text/json");
-    request.open("GET", endpoint + "/Destiny2/Manifest/DestinyInventoryItemDefinition/" + hash + "/");
-    request.setRequestHeader(xApiKeyHeader, xApiKeyValue);
-    request.onloadend = function() {
-        if (request.status === 200) {
-            let item = JSON.parse(request.responseText);
-            cachedItems[hash] = item;
-            callback((item.Response.displayProperties.name));
-        } else {
-            showError(request.status, request.statusText);
-        }
-    };
-    request.send()
+function getItemNameByHash(hash) {
+    return new Promise(function(resolve, reject) {
+        let request = new XMLHttpRequest();
+        request.overrideMimeType("text/json");
+        request.open("GET", endpoint + "/Destiny2/Manifest/DestinyInventoryItemDefinition/" + hash + "/");
+        request.setRequestHeader(xApiKeyHeader, xApiKeyValue);
+        request.onloadend = function() {
+            if (request.status === 200) {
+                resolve(JSON.parse(request.responseText).Response.displayProperties.name);
+            } else {
+                reject(request.status, request.statusText);
+            }
+        };
+        request.send();
+    });
+
 }
 
 function reveal() {
@@ -91,10 +101,10 @@ function reveal() {
 }
 
 
-function showError(code, message) {
+function showError(message) {
     let statusLabel = document.getElementById("status");
     statusLabel.classList.add("error");
-    statusLabel.innerText = "Oops! " + code + ": " + message;
+    statusLabel.innerText = "Oop! Something went wrong. Try reloading the site\n" + message;
     statusLabel.hidden = false;
 }
 
