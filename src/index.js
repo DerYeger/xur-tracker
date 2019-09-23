@@ -30,8 +30,8 @@ function getXurInventory() {
 function getItems(inventory) {
     const xurItems = inventory;
     const promises = [];
-    for (let index in xurItems) {
-        const item = xurItems[index];
+    for (const entry of Object.entries(xurItems)) {
+        const item = entry[1];
         promises.push(getItemInfo(item));
     }
     return Promise.all(promises);
