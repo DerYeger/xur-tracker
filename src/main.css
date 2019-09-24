@@ -1,7 +1,7 @@
 html {
     background-color: #121212;
     color: lightgray;
-    font-family: Consolas, serif;
+    font-family: Verdana, sans-serif;
 }
 
 .centered {
@@ -17,8 +17,9 @@ html {
 }
 
 table {
-    margin: 0 auto;
+    margin: 0.5em auto;
     width: 90%;
+
 }
 
 th {
@@ -29,6 +30,11 @@ th {
 th,
 td {
     text-align: left;
+}
+
+th:nth-child(2),
+td:nth-child(2) {
+    text-align: right;
 }
 
 .status {
